@@ -1,5 +1,8 @@
 import json
+import certifi
+import ssl
 
+from urllib.request import HTTPSHandler
 from django.conf import settings
 
 from captcha._compat import (
@@ -34,7 +37,14 @@ def recaptcha_request(params):
     opener_args = []
     proxies = getattr(settings, "RECAPTCHA_PROXY", {})
     if proxies:
-        opener_args = [ProxyHandler(proxies)]
+        opener_args.append(ProxyHandler(proxies))
+
+    # Create the certifi-based HTTPS handler
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    https_handler = HTTPSHandler(context=ssl_context)
+
+    opener_args.append(https_handler)
+
     opener = build_opener(*opener_args)
 
     # Get response from POST to Google endpoint.
